@@ -7,7 +7,8 @@ import java.sql.Statement;
 
 
 public class chatdb {
-	private Connection con = null; // Database objects
+
+	private Connection dbConnect = null; // Database objects
 	// 連接object
 	private Statement stat = null;
 	// 執行,傳入之sql為完整字串
@@ -22,12 +23,12 @@ public class chatdb {
 			Class.forName("com.mysql.jdbc.Driver");
 			//System.out.println("註冊driver");
 			// 註冊driver
-			con = DriverManager
+			dbConnect = DriverManager
 					.getConnection(
-							"jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5",
-							"root", "steveandfrank");
-			//System.out.println("取得connection");
-			// 取得connection
+							SocketServer.SQLaddress, SocketServer.SQLId, SocketServer.SQLPW
+							);
+			//System.out.println("取得dbConnectnection");
+			// 取得dbConnectnection
 
 			// jdbc:mysql://localhost/test?useUnicode=true&characterEncoding=Big5
 			// localhost是主機名,test是database名
@@ -48,7 +49,7 @@ public class chatdb {
 		int[] result=null;
 		String query = "select chatID from chatroomdb where sellerID=? or buyerID=?";
 		try{
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setInt(1, userID);
 			pst.setInt(2, userID);
 			rs=pst.executeQuery();
@@ -85,7 +86,7 @@ public class chatdb {
 	{
 		String query = "select chatRoute from chatroomdb where chatID=?";
 		try{
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setInt(1, chatID);
 			rs = pst.executeQuery();
 			if(rs.next())
@@ -107,7 +108,7 @@ public class chatdb {
 		int BID,SID,notiB,notiS;
 		String query = "select * from chatroomdb where chatID=?";
 		try{
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setInt(1, chatID);
 			rs = pst.executeQuery();
 			
@@ -120,7 +121,7 @@ public class chatdb {
 			if(userID==BID&&notiB==1)	//要通知Buyer
 			{
 				query = "update chatroomdb set notiBuyer=0 where chatID=?"; //先把通知關掉避免重覆通知
-				pst = con.prepareStatement(query);
+				pst = dbConnect.prepareStatement(query);
 				pst.setInt(1, chatID);
 				pst.executeUpdate();
 				return true;	
@@ -128,7 +129,7 @@ public class chatdb {
 			else if(userID==SID&&notiS==1)	//要通知Seller
 			{	
 				query = "update chatroomdb set notiSeller=0 where chatID=?";	//先把通知關掉避免重覆通知
-				pst = con.prepareStatement(query);
+				pst = dbConnect.prepareStatement(query);
 				pst.setInt(1, chatID);
 				pst.executeUpdate();
 				return true;
@@ -162,7 +163,7 @@ public class chatdb {
 		
 		try{
 			
-			pst = con.prepareStatement(searchQuery);
+			pst = dbConnect.prepareStatement(searchQuery);
 			pst.setInt(1, ProductID);
 			pst.setInt(2, SellerID);
 			pst.setInt(3, BuyerID);
@@ -174,14 +175,14 @@ public class chatdb {
 			}
 			
 			
-			pst = con.prepareStatement(createQuery);	//執行insert一筆新的資料
+			pst = dbConnect.prepareStatement(createQuery);	//執行insert一筆新的資料
 			pst.setInt(1, ProductID);
 			pst.setInt(2, SellerID);
 			pst.setInt(3, BuyerID);
 			pst.executeUpdate();
 			
 			createQuery = "select MAX(chatID) from chatroomdb where buyerID = ?";	//把剛剛insert資料的chatID抓出來
-			pst = con.prepareStatement(createQuery);
+			pst = dbConnect.prepareStatement(createQuery);
 			pst.setInt(1, BuyerID);
 			rs = pst.executeQuery();
 			
@@ -209,21 +210,21 @@ public class chatdb {
 		String query = "select * from chatroomdb where chatID=?";	//抓取chatroom資料
 		try{
 			
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setInt(1, chatID);
 			rs = pst.executeQuery();
 			if(rs.next())
 			if(userID==rs.getInt("buyerID"))	//如果是買方,通知賣方
 			{
 				query = "update chatroomdb set notiSeller=1 where chatID=?";
-				pst = con.prepareStatement(query);
+				pst = dbConnect.prepareStatement(query);
 				pst.setInt(1, chatID);
 				pst.execute();
 			}
 			else if(userID==rs.getInt("sellerID"))//如果是賣方,通知買方
 			{
 				query = "update chatroomdb set notiBuyer=1 where chatID=?";
-				pst = con.prepareStatement(query);
+				pst = dbConnect.prepareStatement(query);
 				pst.setInt(1, chatID);
 				pst.execute();
 			}
@@ -245,7 +246,7 @@ public class chatdb {
 		String query = "select * from chatroomdb where chatID=?";	//抓取聊天室資料
 		try{
 			
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setInt(1, chatID);
 			rs = pst.executeQuery();
 			
@@ -254,14 +255,14 @@ public class chatdb {
 			if(userID==rs.getInt("buyerID"))	//如果是買方,關掉買方的通知
 			{
 				query = "update chatroomdb set notiBuyer=0 where chatID=?";
-				pst = con.prepareStatement(query);
+				pst = dbConnect.prepareStatement(query);
 				pst.setInt(1, chatID);
 				pst.execute();
 			}
 			else if(userID==rs.getInt("sellerID")) //如果是賣方,關掉賣方的通知
 			{
 				query = "update chatroomdb set notiSeller=0 where chatID=?";
-				pst = con.prepareStatement(query);
+				pst = dbConnect.prepareStatement(query);
 				pst.setInt(1, chatID);
 				pst.execute();
 			}
@@ -283,7 +284,7 @@ public class chatdb {
 		String result="";
 		String query = "select chatID from chatroomdb where buyerID = ?";	//抓取這個買方的chatroom
 		try{
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setInt(1, userID);
 			rs = pst.executeQuery();
 			
@@ -309,7 +310,7 @@ public class chatdb {
 		String result="";
 		String query = "select chatID from chatroomdb where sellerID = ?";	//抓取這個賣方的chatroom
 		try{
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setInt(1, userID);
 			rs = pst.executeQuery();
 			

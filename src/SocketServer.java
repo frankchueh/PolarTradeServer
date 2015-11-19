@@ -21,6 +21,10 @@ import java.util.*;
 
 public class SocketServer {
 
+	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
+				,SQLId = "user"
+				,SQLPW = "12345678";
+	
 	userdb DBuser = new userdb();
     locationDB DBmap = new locationDB();
     productDB DBproduct = new productDB();
@@ -31,9 +35,8 @@ public class SocketServer {
 		mr.start();
 	}
 	
-
 	public static void main(String args[]) {
-
+		
 		InetAddress ip = null;
 		String hostname;
 		try {
@@ -49,7 +52,8 @@ public class SocketServer {
 		
 
 	}
-
+	
+	
 	class MessageRecevicer extends Thread {
 
 		private ServerSocket socket1;
@@ -238,9 +242,10 @@ public class SocketServer {
 				else if(command.equals("DownloadMessage"))
 				{
 					int chatID = Integer.parseInt(br.readLine());
-					int userID = Integer.parseInt(br.readLine());
+					String Account = br.readLine();
+					int userID = DBuser.getUserID(Account);
 					DBchat.cancelNotificatiom(chatID, userID);
-					FileManager chatData = new FileManager("chatroom/"+chatID+".txt");
+					FileManager chatData = new FileManager("/chatroom/"+chatID+".txt");
 					String[] tem_data = chatData.readAllLine();
 					String data="";
 					for(int i=0;i<tem_data.length;i++)
@@ -271,11 +276,13 @@ public class SocketServer {
 				else if(command.equals("UpdateMessage"))
 				{
 					int chatID = Integer.parseInt(br.readLine());
-					int userID = Integer.parseInt(br.readLine());
+					String Account = br.readLine();
+					int userID = DBuser.getUserID(Account);
+					
 					DBchat.sendNotification(chatID, userID);
-					FileManager chatData = new FileManager("chatroom/"+chatID+".txt");
+					FileManager chatData = new FileManager("/chatroom/"+chatID+".txt");
 					String line;
-					while((line=br.readLine())!=null)
+					while(!(line=br.readLine()).equals("----MESSAGE----END----"))
 					{
 						chatData.writeLine(line);
 					}

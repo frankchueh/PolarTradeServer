@@ -29,9 +29,9 @@ public class productDB {
 			// Driver 註冊
 			Class.forName("com.mysql.jdbc.Driver");
 			// 取得 Connection -> 給定主機名稱 ，Database 名稱  ，使用者登入資訊
-			dbConnect = DriverManager.getConnection("jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5", 
-											  "root", 
-											  "steveandfrank");
+			dbConnect = DriverManager.getConnection(
+							SocketServer.SQLaddress, SocketServer.SQLId, SocketServer.SQLPW
+							);
 			
 		}catch(ClassNotFoundException e) {
 			System.out.println("DriverClassNotFound :" + e.toString());

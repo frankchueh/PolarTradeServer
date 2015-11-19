@@ -10,7 +10,7 @@ import java.util.Date;
 
 public class userdb {
 
-	private Connection con = null; // Database objects
+	private Connection dbConnect; // Database objects
 	// 連接object
 	private Statement stat = null;
 	// 執行,傳入之sql為完整字串
@@ -26,10 +26,9 @@ public class userdb {
 			Class.forName("com.mysql.jdbc.Driver");
 			//System.out.println("註冊driver");
 			// 註冊driver
-			con = DriverManager
-					.getConnection(
-							"jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5",
-							"root", "steveandfrank");
+			dbConnect = DriverManager.getConnection(
+					SocketServer.SQLaddress, SocketServer.SQLId, SocketServer.SQLPW
+					);
 			//System.out.println("取得connection");
 			// 取得connection
 
@@ -49,7 +48,7 @@ public class userdb {
 	public boolean Login(String account, String password) {
 		String query = "select Password from userdb where binary Account=?"; // 使用binary辨別大小寫
 		try {
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setString(1, account);
 			rs = pst.executeQuery();
 			if (rs.next()) { // 判斷是否有result
@@ -78,7 +77,7 @@ public class userdb {
 	public boolean isAvailable(String account) {
 		String query = "select Password from userdb where binary Account=?"; // 使用binary辨別大小寫
 		try {
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setString(1, account);
 			rs = pst.executeQuery();
 			if (rs.next()) {
@@ -99,7 +98,7 @@ public class userdb {
 	public void setPhoto(String account, String photoPath) {
 		String query = "update userdb set Profile=? where Account=?";
 		try {
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setString(1, photoPath);
 			pst.setString(2, account);
 			pst.executeUpdate();
@@ -116,7 +115,7 @@ public class userdb {
 		String query = "select * from userdb where Account=?;";
 
 		try {
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setString(1, Account);
 			rs = pst.executeQuery();
 			if (rs.next())
@@ -138,7 +137,7 @@ public class userdb {
 		String info = "";
 		String query = "select * from userinfodb where userID=?";
 		try {
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setInt(1, userID);
 			rs = pst.executeQuery();
 
@@ -161,7 +160,7 @@ public class userdb {
 		String query = "update userdb set username =? where account=?";
 
 		try {
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setString(1, username);
 			pst.setString(2, account);
 			pst.executeUpdate();
@@ -178,7 +177,7 @@ public class userdb {
 		String query = "SELECT userID FROM userdb where account= ? ;";
 
 		try {
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setString(1, account);
 			rs = pst.executeQuery();
 			if (rs.next())
@@ -205,7 +204,7 @@ public class userdb {
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			Date parsed = sdf.parse(Bdate);
 			java.sql.Date date = new java.sql.Date(parsed.getTime());
-			pst = con.prepareStatement(query);
+			pst = dbConnect.prepareStatement(query);
 			pst.setInt(1, Age);
 			pst.setDate(2, date);
 			pst.setString(3, sex);
@@ -239,7 +238,7 @@ public class userdb {
 				+ "select ifNULL(max(userID),0)+1,?,?,? from userdb;";
 		try {
 			if (isAvailable(account)) {
-				pst = con.prepareStatement(query); // 建立一筆帳戶資料
+				pst = dbConnect.prepareStatement(query); // 建立一筆帳戶資料
 				pst.setString(1, username);
 				pst.setString(2, account);
 				pst.setString(3, password);
@@ -249,7 +248,7 @@ public class userdb {
 				if (id != -1) {
 //					System.out.print("id:" + id+"\n");
 					query = "insert into userinfodb(userID) value(?)"; // 建立帳戶詳細資料,目前只有userID
-					pst = con.prepareStatement(query);
+					pst = dbConnect.prepareStatement(query);
 					pst.setInt(1, id);
 					pst.executeUpdate();
 				}
