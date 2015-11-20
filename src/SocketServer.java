@@ -21,9 +21,13 @@ import java.util.*;
 
 public class SocketServer {
 
-	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
-				,SQLId = "user"
-				,SQLPW = "12345678";
+	//static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
+	//			,SQLId = "user"
+	//			,SQLPW = "12345678";
+	
+	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
+	,SQLId = "root"
+	,SQLPW = "steveandfrank";
 	
 	userdb DBuser = new userdb();
     locationDB DBmap = new locationDB();
@@ -32,7 +36,9 @@ public class SocketServer {
 	public void run() {
 
 		MessageRecevicer mr = new MessageRecevicer();
+		PhotoRecevicer pmr = new PhotoRecevicer();
 		mr.start();
+		pmr.start();
 	}
 	
 	public static void main(String args[]) {
@@ -91,6 +97,159 @@ public class SocketServer {
 			}
 		}
 	}
+	
+	class PhotoRecevicer extends Thread {
+
+		private ServerSocket socket1;
+		private Socket conn1;
+		private final int Port1 = 3839;
+
+		public void run() {
+			try {
+				socket1 = new ServerSocket(Port1);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			int threadNo;
+			for (threadNo = 1;; threadNo++) {
+				System.out.println("MessageRecevicer waiting...");
+				String conIp = "";
+				try {
+					conn1 = socket1.accept();
+					conIp = conn1.getInetAddress().toString();
+					System.out.println("PhotoRecevicer: receive " + conIp
+							+ " calling....");
+					conn1.setSoTimeout(15000);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+				System.out.println("PhotoRecevicer: Thread " + threadNo
+						+ "handling");
+				PhotoReceviceThread newPhotoMessageThread = new PhotoReceviceThread(
+						conn1, threadNo);
+				newPhotoMessageThread.start();
+
+			}
+		}
+	}
+	
+	class PhotoReceviceThread extends Thread {
+		private Socket conn;
+		int threadNo;
+		FileManager fileMgr;
+
+		public PhotoReceviceThread(Socket conn, int threadNo) {
+			this.conn = conn;
+			this.threadNo = threadNo;
+
+			System.out.println("PhotoReceviceThread " + threadNo + " handle "
+					+ conn.getInetAddress() + "'s calling");
+		}
+
+		public void run() {
+			try {
+
+				BufferedReader br = new BufferedReader(new InputStreamReader(
+						conn.getInputStream()));
+				
+				String command;
+				command = br.readLine(); // 第一行為指令
+
+				PrintWriter pw = new PrintWriter(new OutputStreamWriter(
+						conn.getOutputStream(), "utf-8"), true);
+				
+				if (command.equals("GetPhoto")) {
+					String photoPath = br.readLine();
+					File f = new File(photoPath);
+					if (f.exists()) {
+						pw.println("success");
+						System.out.println("檔案存在");
+
+						FileInputStream fis = new FileInputStream(f);
+						ObjectOutputStream oos = new ObjectOutputStream(
+								conn.getOutputStream());
+						byte[] buffer = new byte[1024];
+						int len = -1;
+						ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+						while ((len = fis.read(buffer)) != -1) {
+							outStream.write(buffer, 0, len);
+						}
+						byte[] photo = outStream.toByteArray();
+						oos.writeObject(photo);
+						fis.close();
+
+					} else {
+						pw.println("fail");
+						System.out.println("檔案不存在");
+					}
+				}
+				else if (command.equals("UpdateUserPhoto")) {
+					
+					String account=br.readLine();
+					pw.println("OK");
+					ObjectInputStream ois = new ObjectInputStream(conn.getInputStream());
+					byte[] buffer;
+					try {
+						if ((buffer = (byte[]) ois.readObject()) != null) // 判斷是否有照片
+						{
+							FileManager photo = new FileManager(
+									"UserPhoto/" + account + ".jpg");
+							photo.writeObjec(buffer);
+							DBuser.setPhoto(account, photo.savePath); // 變更使用者照片
+							pw.println("success");
+						}
+					}
+					
+					catch (ClassNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						pw.println("fail");
+					}
+				}
+				else if(command.equals("uploadProductPhoto")) {
+					
+					int userID = DBuser.getUserID(br.readLine());
+					pw.println("msg1 success");
+					
+					int productID = DBproduct.getNewProductIDbyUserID(userID);  // 重新根據 userID 取得 productID
+					
+					ObjectInputStream ois = new ObjectInputStream(conn.getInputStream());
+					byte[] buffer;
+					
+					try {
+						if((buffer=(byte[])ois.readObject())!=null)	//判斷是否有 product photo 傳來
+						{
+							FileManager photo = new FileManager("/product/"+ productID + "/" + "photo.jpg");
+							photo.writeObjec(buffer);  // 將照片存到指定路徑
+							
+							pw.println("msg2 success");
+						}
+					} catch (ClassNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}	
+				}
+				pw.close();
+//				try {
+//					Thread.sleep(3000);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+
+				conn.close();
+
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+	}
+
 
 
 	class MessageReceviceThread extends Thread {
@@ -170,32 +329,7 @@ public class SocketServer {
 					}
 				}
 
-				else if (command.equals("GetPhoto")) {
-					String photoPath = br.readLine();
-					File f = new File(photoPath);
-					if (f.exists()) {
-						pw.println("success");
-						System.out.println("檔案存在");
-
-						FileInputStream fis = new FileInputStream(f);
-						ObjectOutputStream oos = new ObjectOutputStream(
-								conn.getOutputStream());
-						byte[] buffer = new byte[1024];
-						int len = -1;
-						ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-						while ((len = fis.read(buffer)) != -1) {
-							outStream.write(buffer, 0, len);
-						}
-						byte[] photo = outStream.toByteArray();
-						oos.writeObject(photo);
-						fis.close();
-
-					} else {
-						pw.println("fail");
-						System.out.println("檔案不存在");
-					}
-
-				} else if (command.equals("UpdateUserInfo")) {
+			    else if (command.equals("UpdateUserInfo")) {
 					String account = br.readLine();
 					String username = br.readLine();
 					String age = br.readLine();
@@ -203,8 +337,7 @@ public class SocketServer {
 					String sex = br.readLine();
 					String phone = br.readLine();
 					String email = br.readLine();
-					
-					
+	
 					if (DBuser.updateUserinfo(username, account)) {
 						int userID = DBuser.getUserID(account);
 						if (DBuser.updateUserDetail(userID,
@@ -215,30 +348,6 @@ public class SocketServer {
 					} else
 						pw.println("fail");
 				}
-				else if (command.equals("UpdateUserPhoto")) {
-					
-					String account=br.readLine();
-					pw.println("OK");
-					ObjectInputStream ois = new ObjectInputStream(conn.getInputStream());
-					byte[] buffer;
-					try {
-						if ((buffer = (byte[]) ois.readObject()) != null) // 判斷是否有照片
-						{
-							FileManager photo = new FileManager(
-									"UserPhoto/" + account + ".jpg");
-							photo.writeObjec(buffer);
-							DBuser.setPhoto(account, photo.savePath); // 變更使用者照片
-							pw.println("success");
-						}
-					}
-					
-					catch (ClassNotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						pw.println("fail");
-					}
-					}
-				
 				else if(command.equals("DownloadMessage"))
 				{
 					int chatID = Integer.parseInt(br.readLine());
@@ -362,29 +471,6 @@ public class SocketServer {
 						pw.println("upload failed");
 					}
 					
-				}
-				else if(command.equals("uploadProductPhoto")) {
-					
-					int userID = DBuser.getUserID(br.readLine());
-					pw.println("msg1 success");
-					
-					int productID = DBproduct.getNewProductIDbyUserID(userID);  // 重新根據 userID 取得 productID
-					
-					ObjectInputStream ois = new ObjectInputStream(conn.getInputStream());
-					byte[] buffer;
-					
-					try {
-						if((buffer=(byte[])ois.readObject())!=null)	//判斷是否有 product photo 傳來
-						{
-							FileManager photo = new FileManager("/product/"+ productID + "/" + "photo.jpg");
-							photo.writeObjec(buffer);  // 將照片存到指定路徑
-							
-							pw.println("msg2 success");
-						}
-					} catch (ClassNotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}	
 				}
 				else if(command.equals("getUserProduct")) {    // 取得使用者的所有商品ID
 					int userID = DBuser.getUserID(br.readLine());
