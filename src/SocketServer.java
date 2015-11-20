@@ -387,7 +387,11 @@ public class SocketServer {
 					String Account = br.readLine();
 					int userID = DBuser.getUserID(Account);
 					String B = DBchat.getChatroomForBuyer(userID);
+					if(B.equals(""))	//如果字串是空的split會有問題,所以增加一格空白
+						B=" ";
 					String S = DBchat.getChatroomForSeller(userID);
+					if(S.equals(""))	//如果字串是空的split會有問題,所以增加一格空白
+						S=" ";
 					pw.println("success");
 					pw.println(B);
 					pw.println(S);
