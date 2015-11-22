@@ -24,13 +24,13 @@ import java.util.*;
 
 public class SocketServer {
 
-	//static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
-	//			,SQLId = "user"
-	//			,SQLPW = "12345678";
+	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
+				,SQLId = "user"
+				,SQLPW = "12345678";
 	
-	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
-	,SQLId = "root"
-	,SQLPW = "steveandfrank";
+//	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
+//	,SQLId = "root"
+//	,SQLPW = "steveandfrank";
 	
 	userdb DBuser = new userdb();
     locationDB DBmap = new locationDB();
@@ -189,7 +189,7 @@ public class SocketServer {
 						System.out.println("檔案不存在");
 					}
 				}
-				else if (command.equals("UpdateUserPhoto")) {
+				else if (command.equals("UploadUserPhoto")) {
 					
 					String account=br.readLine();
 					pw.println("OK");
@@ -199,7 +199,7 @@ public class SocketServer {
 						if ((buffer = (byte[]) ois.readObject()) != null) // 判斷是否有照片
 						{
 							FileManager photo = new FileManager(
-									"UserPhoto/" + account + ".jpg");
+									"/UserPhoto/" + account + ".jpg");
 							photo.writeObjec(buffer);
 							DBuser.setPhoto(account, photo.savePath); // 變更使用者照片
 							pw.println("success");
@@ -253,8 +253,6 @@ public class SocketServer {
 		}
 	}
 
-
-
 	class MessageReceviceThread extends Thread {
 		private Socket conn;
 		int threadNo;
@@ -297,21 +295,7 @@ public class SocketServer {
 					String username = br.readLine();
 					if (DBuser.SignUp(account, password, username)) {
 						System.out.println("Sign up success");
-						ObjectInputStream ois = new ObjectInputStream(
-								conn.getInputStream());
-						byte[] buffer;
-						try {
-							if ((buffer = (byte[]) ois.readObject()) != null) // 判斷是否有照片
-							{
-								FileManager photo = new FileManager(
-										"UserPhoto/" + account + ".jpg");
-								photo.writeObjec(buffer);
-								DBuser.setPhoto(account, photo.savePath); // 變更使用者照片
-							}
-						} catch (ClassNotFoundException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+						
 						pw.println("success");
 					} else {
 						System.out.println("Sign up fail"); // 帳戶已存在
@@ -408,7 +392,11 @@ public class SocketServer {
 					String Account = br.readLine();
 					int userID = DBuser.getUserID(Account);
 					String B = DBchat.getChatroomForBuyer(userID);
+					if(B.equals(""))	//如果字串是空的split會有問題,所以增加一格空白
+						B=" ";
 					String S = DBchat.getChatroomForSeller(userID);
+					if(S.equals(""))	//如果字串是空的split會有問題,所以增加一格空白
+						S=" ";
 					pw.println("success");
 					pw.println(B);
 					pw.println(S);
