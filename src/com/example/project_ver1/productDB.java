@@ -1,3 +1,4 @@
+package com.example.project_ver1;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -79,7 +80,8 @@ public class productDB {
 			result = prepare_input_stat.executeQuery();
 	    	
 			if(result.next()){
-				Qresult += result.getString("Pname") + "," +
+				Qresult += result.getInt("productID") + "," +
+						   result.getString("Pname") + "," +
 						   result.getInt("price") + "," +
 						   result.getString("Pphoto") + "," +
 						   result.getString("Pinfo");

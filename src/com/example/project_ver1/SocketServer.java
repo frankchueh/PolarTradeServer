@@ -1,3 +1,4 @@
+package com.example.project_ver1;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -7,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -15,6 +17,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import org.apache.commons.lang.SerializationUtils;
 
 import java.util.*;
 
@@ -114,7 +117,7 @@ public class SocketServer {
 
 			int threadNo;
 			for (threadNo = 1;; threadNo++) {
-				System.out.println("MessageRecevicer waiting...");
+				System.out.println("PhotoRecevicer waiting...");
 				String conIp = "";
 				try {
 					conn1 = socket1.accept();
@@ -277,6 +280,7 @@ public class SocketServer {
 				PrintWriter pw = new PrintWriter(new OutputStreamWriter(
 						conn.getOutputStream(), "utf-8"), true);
 				
+				
 				//判斷指令是什麼
 				if (command.equals("Login")) { // 登入指令,會回傳是否成功
 					if (DBuser.Login(br.readLine(), br.readLine())) {
@@ -286,7 +290,8 @@ public class SocketServer {
 						pw.println("fail");
 						System.out.println("login fail");
 					}
-				} else if (command.equals("SignUp")) { // 建立帳戶指令,會回傳是否成功(帳戶是否已存在)
+				} 
+				else if (command.equals("SignUp")) { // 建立帳戶指令,會回傳是否成功(帳戶是否已存在)
 					String account = br.readLine();
 					String password = br.readLine();
 					String username = br.readLine();
@@ -473,33 +478,49 @@ public class SocketServer {
 					
 				}
 				else if(command.equals("getUserProduct")) {    // 取得使用者的所有商品ID
-					int userID = DBuser.getUserID(br.readLine());
-					String pid_set = "";
 					
-					pid_set = DBproduct.getUserProduct(userID);
-					pw.println("success");
-					pw.println(pid_set);
+					String [] pid_set = null;
+					String [] pinfo = null;
+					Product temp_product = null;
+					ArrayList <Product> product_set = new ArrayList <Product>();
+					int productID = -1;
 					
-					//System.out.println("Get pid success :" + pid_set);
+					int userID = DBuser.getUserID(br.readLine());  // 取得 userID
+					pid_set = DBproduct.getUserProduct(userID).split(",");  // 取得 user 下的所有商品 ID
+					
+					if(pid_set != null) {
+						pw.println("success");
+						ObjectOutputStream oos = new ObjectOutputStream(
+								conn.getOutputStream());
+						for(int i = 0; i < pid_set.length; i++) {
+							productID = Integer.parseInt(pid_set[i]);
+							pinfo = DBproduct.getProductInfo(productID).split(",");
+							File f = new File(pinfo[3]);
+							if (f.exists()) {
+								FileInputStream fis = new FileInputStream(f);
+								byte[] buffer = new byte[1024];
+								int len = -1;
+								ByteArrayOutputStream outStream = new ByteArrayOutputStream();  // 將照片讀進來
+								while ((len = fis.read(buffer)) != -1) {
+									outStream.write(buffer, 0, len);
+								}
+								byte[] photo = outStream.toByteArray();  // 將 outStream 讀到的資料轉成 photo
+								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),pinfo[4],photo);
+								product_set.add(temp_product);
+								fis.close();
+							}	
+						}
+						byte[] send_P = SerializationUtils.serialize(product_set);
+						oos.writeObject(send_P);
+						oos.flush();
+					}
+					else {
+						pw.print("fail");
+					}
+					
 				}
 				else if(command.equals("getProductInfo")) {
-					int productID = Integer.parseInt(br.readLine());
-					
-					String pinfo = DBproduct.getProductInfo(productID);
-					
-					if(pinfo!=null)
-					{	
-						pw.println("success");
-						pw.println(pinfo);
-						
-						//System.out.println("Get pinfo : " + pinfo);
-					}
-					else
-					{
-						pw.print("fail");
-						
-						//System.out.println("Get all pinfo fail");
-					}
+					// 保留
 				}
 
 				pw.close();
@@ -509,7 +530,6 @@ public class SocketServer {
 //					// TODO Auto-generated catch block
 //					e.printStackTrace();
 //				}
-
 				conn.close();
 
 			} catch (IOException e) {
@@ -519,6 +539,4 @@ public class SocketServer {
 
 		}
 	}
-
-	
 }
