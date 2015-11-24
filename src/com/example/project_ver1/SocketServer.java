@@ -16,6 +16,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.lang.SerializationUtils;
 
@@ -24,13 +25,13 @@ import java.util.*;
 
 public class SocketServer {
 
-	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
-				,SQLId = "user"
-				,SQLPW = "12345678";
+	//static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
+	//			,SQLId = "user"
+	//			,SQLPW = "12345678";
 	
-//	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
-//	,SQLId = "root"
-//	,SQLPW = "steveandfrank";
+	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
+	,SQLId = "root"
+	,SQLPW = "steveandfrank";
 	
 	userdb DBuser = new userdb();
     locationDB DBmap = new locationDB();
@@ -469,7 +470,10 @@ public class SocketServer {
 					
 					String [] pid_set = null;
 					String [] pinfo = null;
+					String [] temp_info = null;
 					Product temp_product = null;
+					byte [] photo = null;
+					String pt = "";
 					ArrayList <Product> product_set = new ArrayList <Product>();
 					int productID = -1;
 					
@@ -483,7 +487,12 @@ public class SocketServer {
 						for(int i = 0; i < pid_set.length; i++) {
 							productID = Integer.parseInt(pid_set[i]);
 							pinfo = DBproduct.getProductInfo(productID).split(",");
-							File f = new File(pinfo[3]);
+							
+							FileManager info = new FileManager("/product/"+ productID +"/" + "info.txt");
+							temp_info = info.readAllLine();
+							pt = buildStr(temp_info);
+							System.out.println(pt);
+						    File f = new File(pinfo[3]);   // get product photo
 							if (f.exists()) {
 								FileInputStream fis = new FileInputStream(f);
 								byte[] buffer = new byte[1024];
@@ -492,11 +501,11 @@ public class SocketServer {
 								while ((len = fis.read(buffer)) != -1) {
 									outStream.write(buffer, 0, len);
 								}
-								byte[] photo = outStream.toByteArray();  // 將 outStream 讀到的資料轉成 photo
-								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),pinfo[4],photo);
+							    photo = outStream.toByteArray();  // 將 outStream 讀到的資料轉成 photo
+								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),pt.getBytes(Charset.forName("UTF-8")),photo);
 								product_set.add(temp_product);
 								fis.close();
-							}	
+							}
 						}
 						byte[] send_P = SerializationUtils.serialize(product_set);
 						oos.writeObject(send_P);
@@ -526,5 +535,14 @@ public class SocketServer {
 			}
 
 		}
+	}
+	
+	protected String buildStr (String[] str_array) {
+		
+		String str = "";
+		for(String s : str_array) {
+		    str += s + "\n";
+		}
+		return str;
 	}
 }
