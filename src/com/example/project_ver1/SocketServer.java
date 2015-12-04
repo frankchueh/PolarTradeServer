@@ -385,10 +385,11 @@ public class SocketServer {
 					int userID = DBuser.getUserID(Account);
 					DBchat.sendNotification(chatID, userID);
 					
+					msg = "" + DBuser.getUserName(Account) + "(" + Account + "):\n";
 					FileManager chatData = new FileManager("/chatroom/"+chatID+".txt");
 					for(int i=2;i<msg_array.length;i++)
-						chatData.writeLine(msg_array[i]);
-					
+						msg += "\t" + msg_array[i] + "\n";
+					chatData.writeLine(msg);
 					pw.println("success");
 					}
 					catch(Exception e)
