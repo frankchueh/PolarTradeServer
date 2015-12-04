@@ -25,13 +25,13 @@ import java.util.*;
 
 public class SocketServer {
 
-	//static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
-	//			,SQLId = "user"
-	//			,SQLPW = "12345678";
+	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
+				,SQLId = "user"
+				,SQLPW = "12345678";
 	
-	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
-	,SQLId = "root"
-	,SQLPW = "steveandfrank";
+//	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
+//	,SQLId = "root"
+//	,SQLPW = "steveandfrank";
 	
 	userdb DBuser = new userdb();
     locationDB DBmap = new locationDB();
@@ -349,7 +349,7 @@ public class SocketServer {
 					String data="";
 					for(int i=0;i<tem_data.length;i++)
 					{
-						data += tem_data[i];
+						data += tem_data[i] + "\n";
 					}
 					pw.println("success");
 					pw.println(data);
@@ -374,18 +374,27 @@ public class SocketServer {
 				
 				else if(command.equals("UpdateMessage"))
 				{
-					int chatID = Integer.parseInt(br.readLine());
-					String Account = br.readLine();
-					int userID = DBuser.getUserID(Account);
+					try{
+					ObjectInputStream ois = new ObjectInputStream(conn.getInputStream());
+					String msg;
+					msg = (String) ois.readObject();
+					String[] msg_array = msg.split("\n");
 					
+					int chatID = Integer.parseInt(msg_array[0]);
+					String Account = msg_array[1];
+					int userID = DBuser.getUserID(Account);
 					DBchat.sendNotification(chatID, userID);
+					
 					FileManager chatData = new FileManager("/chatroom/"+chatID+".txt");
-					String line;
-					while(!(line=br.readLine()).equals("----MESSAGE----END----"))
-					{
-						chatData.writeLine(line);
-					}
+					for(int i=2;i<msg_array.length;i++)
+						chatData.writeLine(msg_array[i]);
+					
 					pw.println("success");
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+					}
 				}
 				
 				else if(command.equals("ListChatRoom"))
