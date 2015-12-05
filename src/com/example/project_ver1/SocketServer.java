@@ -412,6 +412,32 @@ public class SocketServer {
 					pw.println(B);
 					pw.println(S);
 				}
+				
+				else if (command.equals("CheckMessage"))
+				{
+					String account = br.readLine();
+					int userID = DBuser.getUserID(account);
+					int[] chatID = DBchat.getChatID(userID);
+					String new_message = "";
+					for(int ID:chatID)
+					{
+						if(DBchat.checkNotification(ID, userID))
+						{	
+							DBchat.cancelNotificatiom(ID, userID);
+							new_message += ID + ",";
+						}
+					}
+					if(!new_message.equals(""))
+					{
+						pw.println("get new message");
+						pw.println(new_message);
+					}
+					else
+					{
+						pw.println("no message");
+					}
+				}
+				
 				else if(command.equals("updateLocate")) {
 					
 					int userID = DBuser.getUserID(br.readLine());
