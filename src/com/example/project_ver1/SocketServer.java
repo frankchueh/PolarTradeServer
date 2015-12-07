@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -450,7 +451,7 @@ public class SocketServer {
 								FileManager info = new FileManager("/product/"+ productID +"/" + "info.txt");
 								productInfo = new String(buffer,StandardCharsets.UTF_8);
 								s_productInfo = productInfo.split("\n");
-								info.writeAllLine(s_productInfo);;  // 將product  info存到指定路徑
+								info.writeAllLine(s_productInfo);  // 將product  info存到指定路徑
 								
 								pw.println("msg2 success");
 								pw.println(productID);
@@ -491,7 +492,6 @@ public class SocketServer {
 							FileManager info = new FileManager("/product/"+ productID +"/" + "info.txt");
 							temp_info = info.readAllLine();
 							pt = buildStr(temp_info);
-							System.out.println(pt);
 						    File f = new File(pinfo[3]);   // get product photo
 							if (f.exists()) {
 								FileInputStream fis = new FileInputStream(f);
@@ -502,6 +502,10 @@ public class SocketServer {
 									outStream.write(buffer, 0, len);
 								}
 							    photo = outStream.toByteArray();  // 將 outStream 讀到的資料轉成 photo
+							    if(photo != null)
+							    {
+							    	System.out.println("get photo success");
+							    }
 								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),pt.getBytes(Charset.forName("UTF-8")),photo);
 								product_set.add(temp_product);
 								fis.close();
@@ -516,10 +520,42 @@ public class SocketServer {
 					}
 					
 				}
-				else if(command.equals("getProductInfo")) {
-					// 保留
+				else if(command.equals("updateProduct")) {
+					
+					Product u_product = null;
+					String productInfo = "";
+					String [] s_productInfo = null;
+					FileManager info = null;
+					FileWriter writer = null;
+					FileOutputStream photoAinfo = null;
+					pw.println("msg1 success");
+					
+					ObjectInputStream ois = new ObjectInputStream(conn.getInputStream());
+					byte[] buffer;
+					
+					try {
+						if((buffer=(byte[])ois.readObject())!=null)	//判斷是否有 product photo 傳來
+						{
+							u_product = (Product)SerializationUtils.deserialize(buffer);
+							DBproduct.updateProduct(u_product);
+							
+							info = new FileManager("/product/"+ u_product.productID + "/" + "info.txt");
+							productInfo = new String(u_product.productInfo,StandardCharsets.UTF_8);
+							s_productInfo = productInfo.split("\n");
+							info.writeAllLine(s_productInfo);  // 將product  info存到指定路徑
+							
+						    photoAinfo = new FileOutputStream("C:/DataBase" + "/product/"+ u_product.productID + "/" + "photo.jpg");
+							photoAinfo.write(u_product.productPhoto);
+							
+							pw.println("msg2 success");
+							photoAinfo.close();
+						}
+					} catch (ClassNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}	
 				}
-
+					
 				pw.close();
 //				try {
 //					Thread.sleep(3000);

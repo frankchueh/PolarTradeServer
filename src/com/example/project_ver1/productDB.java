@@ -99,15 +99,15 @@ public class productDB {
 	
 	// 更新商品相關資訊 ( 名稱 , 價格 )
 	
-	public void updateProduct(int productID , String Pname , int price) {
+	public void updateProduct(Product new_product) {
 		
 		String query = "UPDATE productdb SET Pname = ? , price = ? WHERE productID = ?;";
 		
 		try{
 			prepare_input_stat = dbConnect.prepareStatement(query);
-			prepare_input_stat.setString(1, Pname);
-			prepare_input_stat.setInt(2, price);
-			prepare_input_stat.setInt(3, productID);
+			prepare_input_stat.setString(1, new_product.productName);
+			prepare_input_stat.setInt(2, new_product.productPrice);
+			prepare_input_stat.setInt(3, new_product.productID);
 			prepare_input_stat.executeUpdate();
 			
 		}catch(SQLException e) {
@@ -115,6 +115,8 @@ public class productDB {
 		}finally {
 			close();
 		}
+		
+		
 	}
 	
 	// 新增一筆新的商品資訊

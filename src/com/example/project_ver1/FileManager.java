@@ -18,12 +18,11 @@ public class FileManager {
 		try{
 		savePath = "C:/DataBase"+filename;
 		f = new File(savePath);
-		if(!f.exists())
-		{
-			//f.mkdir();
-			f.createNewFile();
-		}
-		
+			if(!f.exists())
+			{
+				//f.mkdir();
+				f.createNewFile();
+			}
 		}
 		catch(Exception e)
 		{
@@ -45,7 +44,6 @@ public class FileManager {
 			{
 				line+=temp+"\n";
 			}
-			System.out.println(line);
 			br.close();
 			reader.close();
 			
