@@ -26,13 +26,13 @@ import java.util.*;
 
 public class SocketServer {
 
-	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
-				,SQLId = "user"
-				,SQLPW = "12345678";
+//	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
+//				,SQLId = "user"
+//				,SQLPW = "12345678";
 	
-//	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
-//	,SQLId = "root"
-//	,SQLPW = "steveandfrank";
+	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
+	,SQLId = "root"
+	,SQLPW = "steveandfrank";
 	
 	userdb DBuser = new userdb();
     locationDB DBmap = new locationDB();
@@ -590,6 +590,13 @@ public class SocketServer {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}	
+				}
+				else if(command.equals("deleteProduct")) {
+					
+					int pid = Integer.parseInt(br.readLine());
+					DBproduct.deletProduct(pid);
+					System.out.println("Success delete product" + String.valueOf(pid));
+					pw.println("success");
 				}
 					
 				pw.close();
