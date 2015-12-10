@@ -276,7 +276,9 @@ public class SocketServer {
 				
 				String command;
 				command = br.readLine(); // 第一行為指令
-
+				
+				System.out.println("NO."+ threadNo + " : " +command);
+				
 				PrintWriter pw = new PrintWriter(new OutputStreamWriter(
 						conn.getOutputStream(), "utf-8"), true);
 				
