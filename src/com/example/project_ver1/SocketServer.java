@@ -355,7 +355,8 @@ public class SocketServer {
 				{
 					int PID = Integer.parseInt(br.readLine());
 					int SID = Integer.parseInt(br.readLine());
-					int BID = Integer.parseInt(br.readLine());
+					String Account = br.readLine();
+					int BID = DBuser.getUserID(Account);
 					int chatID = DBchat.getChatroom(PID, SID, BID);
 					if(chatID!=-1)
 					{
@@ -549,7 +550,8 @@ public class SocketServer {
 							    {
 							    	System.out.println("get photo success");
 							    }
-								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),pt.getBytes(Charset.forName("UTF-8")),photo);
+								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),
+										pt.getBytes(Charset.forName("UTF-8")),photo, Integer.parseInt(pinfo[5]));
 								product_set.add(temp_product);
 							}
 						}
@@ -595,7 +597,8 @@ public class SocketServer {
 							    {
 							    	System.out.println("get photo success");
 							    }
-								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),pt.getBytes(Charset.forName("UTF-8")),photo);
+								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),
+										pt.getBytes(Charset.forName("UTF-8")),photo, Integer.parseInt(pinfo[5]));
 								product_set.add(temp_product);
 							}
 						}
