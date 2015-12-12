@@ -422,12 +422,15 @@ public class SocketServer {
 					int userID = DBuser.getUserID(account);
 					int[] chatID = DBchat.getChatID(userID);
 					String new_message = "";
-					for(int ID:chatID)
-					{
-						if(DBchat.checkNotification(ID, userID))
-						{	
-							DBchat.cancelNotificatiom(ID, userID);
-							new_message += ID + ",";
+					if(chatID!=null)
+					{	
+						for(int ID:chatID)
+						{
+							if(DBchat.checkNotification(ID, userID))
+							{	
+								DBchat.cancelNotificatiom(ID, userID);
+								new_message += ID + ",";
+							}
 						}
 					}
 					if(!new_message.equals(""))
