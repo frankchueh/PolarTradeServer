@@ -159,7 +159,7 @@ public class chatdb {
 		String searchQuery = "select chatID from chatroomdb where productID=? and sellerID=? and buyerID=?";
 		
 		String createQuery = "insert chatroomdb(chatID, productID, sellerID, buyerID)"+
-						"select ifNULL(max(chatID),0)+1,?,?,?,? from chatroomdb";
+						"select ifNULL(max(chatID),0)+1,?,?,? from chatroomdb";
 		
 		
 		try{
