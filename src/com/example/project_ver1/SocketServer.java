@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -172,19 +173,10 @@ public class SocketServer {
 					if (f.exists()) {
 						pw.println("success");
 						System.out.println("檔案存在");
-
-						FileInputStream fis = new FileInputStream(f);
+						byte[] photo = getFile(f);
 						ObjectOutputStream oos = new ObjectOutputStream(
 								conn.getOutputStream());
-						byte[] buffer = new byte[1024];
-						int len = -1;
-						ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-						while ((len = fis.read(buffer)) != -1) {
-							outStream.write(buffer, 0, len);
-						}
-						byte[] photo = outStream.toByteArray();
 						oos.writeObject(photo);
-						fis.close();
 
 					} else {
 						pw.println("fail");
@@ -524,6 +516,53 @@ public class SocketServer {
 					}
 					
 				}
+				
+				else if(command.equals("getProduct")) {    // 取得傳入商品ID的資料
+					
+					String [] pid_set = null;
+					String [] pinfo = null;
+					String [] temp_info = null;
+					Product temp_product = null;
+					byte [] photo = null;
+					String pt = "";
+					ArrayList <Product> product_set = new ArrayList <Product>();
+					int productID = -1;
+					
+					//接收pid,pid,pid....
+					pid_set = br.readLine().split(",");
+							
+					if(pid_set != null) {
+						pw.println("success");
+						ObjectOutputStream oos = new ObjectOutputStream(
+								conn.getOutputStream());
+						for(int i = 0; i < pid_set.length; i++) {
+							productID = Integer.parseInt(pid_set[i]);
+							pinfo = DBproduct.getProductInfo(productID).split(",");
+							
+							FileManager info = new FileManager("/product/"+ productID +"/" + "info.txt");
+							temp_info = info.readAllLine();
+							pt = buildStr(temp_info);
+						    File f = new File(pinfo[3]);   // get product photo
+							if (f.exists()) {
+								photo = getFile(f);
+							    if(photo != null)
+							    {
+							    	System.out.println("get photo success");
+							    }
+								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),pt.getBytes(Charset.forName("UTF-8")),photo);
+								product_set.add(temp_product);
+							}
+						}
+						byte[] send_P = SerializationUtils.serialize(product_set);
+						oos.writeObject(send_P);
+						oos.flush();
+					}
+					else {
+						pw.print("fail");
+					}
+					
+				}
+				
 				else if(command.equals("getUserProduct")) {    // 取得使用者的所有商品ID
 					
 					String [] pid_set = null;
@@ -551,21 +590,13 @@ public class SocketServer {
 							pt = buildStr(temp_info);
 						    File f = new File(pinfo[3]);   // get product photo
 							if (f.exists()) {
-								FileInputStream fis = new FileInputStream(f);
-								byte[] buffer = new byte[1024];
-								int len = -1;
-								ByteArrayOutputStream outStream = new ByteArrayOutputStream();  // 將照片讀進來
-								while ((len = fis.read(buffer)) != -1) {
-									outStream.write(buffer, 0, len);
-								}
-							    photo = outStream.toByteArray();  // 將 outStream 讀到的資料轉成 photo
-							    if(photo != null)
+								photo = getFile(f);
+								if(photo != null)
 							    {
 							    	System.out.println("get photo success");
 							    }
 								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),pt.getBytes(Charset.forName("UTF-8")),photo);
 								product_set.add(temp_product);
-								fis.close();
 							}
 						}
 						byte[] send_P = SerializationUtils.serialize(product_set);
@@ -675,6 +706,29 @@ public class SocketServer {
 			}
 
 		}
+	}
+	private byte[] getFile(File file)
+	{		byte[] photo = null;
+			FileInputStream fis;
+			try {
+				fis = new FileInputStream(file);
+				byte[] buffer = new byte[1024];
+				int len = -1;
+				ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+				while ((len = fis.read(buffer)) != -1) {
+					outStream.write(buffer, 0, len);
+				}
+				photo = outStream.toByteArray();
+				fis.close();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return photo;
+			
 	}
 	
 	protected String buildStr (String[] str_array) {
