@@ -26,13 +26,13 @@ import java.util.*;
 
 public class SocketServer {
 
-//	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
-//				,SQLId = "user"
-//				,SQLPW = "12345678";
+	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
+				,SQLId = "user"
+				,SQLPW = "12345678";
 	
-	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
-	,SQLId = "root"
-	,SQLPW = "steveandfrank";
+//	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
+//	,SQLId = "root"
+//	,SQLPW = "steveandfrank";
 	
 	userdb DBuser = new userdb();
     locationDB DBmap = new locationDB();
@@ -602,6 +602,41 @@ public class SocketServer {
 					DBproduct.deletProduct(pid);
 					System.out.println("Success delete product" + String.valueOf(pid));
 					pw.println("success");
+				}
+				
+				else if(command.equals("searchProduct"))
+				{
+					//接收參數
+					double lat = Double.parseDouble(br.readLine());
+					double lng = Double.parseDouble(br.readLine());
+					String account = br.readLine();
+					//使用account取得userID
+					int userID = DBuser.getUserID(account);
+					//回傳userID,lat,lng的字串陣列
+					String[] around_users = DBmap.getRangeID(lat, lng, userID);
+					if(around_users==null)
+					{
+						pw.println("no result");
+					}
+					else
+					{	
+						ObjectOutputStream oos = new ObjectOutputStream(
+								conn.getOutputStream());
+						String result = "";
+						for(String user:around_users)
+						{
+							int around_userID = Integer.parseInt(user.split(",")[0]);
+							String user_product = DBproduct.getUserProduct(around_userID);
+							//有product才加入result
+							if(!user_product.equals(""))
+							{
+								result += user + ":" + user_product + "\n";
+							}
+						}
+						pw.println("success");
+						oos.writeObject(result);
+						oos.flush();
+					}
 				}
 					
 				pw.close();
