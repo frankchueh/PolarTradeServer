@@ -84,7 +84,8 @@ public class productDB {
 						   result.getString("Pname") + "," +
 						   result.getInt("price") + "," +
 						   result.getString("Pphoto") + "," +
-						   result.getString("Pinfo");
+						   result.getString("Pinfo") + "," +
+						   result.getInt("userID");
 			}
 	    			   
 	    }catch(SQLException e) {
