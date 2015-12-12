@@ -179,7 +179,7 @@ public class locationDB {
 		
 			// 根據 user的座標 (lat , lng)  取得使用者範圍內的其他使用者
 		
-		public String getRangeID(double lat , double lng ,int userID) {
+		public String[] getRangeID(double lat , double lng ,int userID) {
 			
 			String Qresult = "";
 			
@@ -209,8 +209,9 @@ public class locationDB {
 			}finally {
 				close();
 			}
-			
-			return Qresult;
+			if(Qresult.equals(""))
+				return null;
+			return Qresult.split("\n");
 		}
 		
 		
