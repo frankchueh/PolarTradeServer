@@ -443,7 +443,23 @@ public class SocketServer {
 						pw.println("no message");
 					}
 				}
-				
+				else if(command.equals("getLocate"))
+				{
+					int userID = DBuser.getUserID(br.readLine());
+					double[] position = DBmap.getUserLocate(userID);
+					if(position != null)
+					{
+						pw.println("success");
+						pw.println(position[0]);
+						pw.println(position[1]);
+						System.out.println("get location: "+position[0]+", "+position[1]);
+					}
+					else
+					{	
+						pw.println("fail");
+						System.out.println("get location failed");
+					}
+				}
 				else if(command.equals("updateLocate")) {
 					
 					int userID = DBuser.getUserID(br.readLine());
@@ -620,20 +636,25 @@ public class SocketServer {
 					}
 					else
 					{	
-						ObjectOutputStream oos = new ObjectOutputStream(
-								conn.getOutputStream());
 						String result = "";
 						for(String user:around_users)
-						{
+						{	
+							//如果result不是第一行就加\n
+							if(!result.equals(""))
+								result += "\n";
+							
 							int around_userID = Integer.parseInt(user.split(",")[0]);
 							String user_product = DBproduct.getUserProduct(around_userID);
 							//有product才加入result
 							if(!user_product.equals(""))
 							{
-								result += user + ":" + user_product + "\n";
+								result += user + ":" + user_product;
 							}
 						}
 						pw.println("success");
+						
+						ObjectOutputStream oos = new ObjectOutputStream(
+								conn.getOutputStream());
 						oos.writeObject(result);
 						oos.flush();
 					}

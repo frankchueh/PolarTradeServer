@@ -179,6 +179,30 @@ public class locationDB {
 		
 			// 根據 user的座標 (lat , lng)  取得使用者範圍內的其他使用者
 		
+		public double[] getUserLocate(int userID)
+		{
+			double[] position = new double[2];
+			String query = "SELECT Latitude,Longitude from locationdb where userID = ?;";
+			try{
+				prepare_input_stat = dbConnect.prepareStatement(query);
+				prepare_input_stat.setInt(1, userID);
+				result = prepare_input_stat.executeQuery();
+				 
+				if(result.next()) {   // 取得符合所設範圍的使用者ID
+					position[0] = result.getDouble("latitude");
+					position[1] = result.getDouble("longitude");
+				 }
+				else
+					return null;
+	
+			}catch(SQLException e) {
+				System.out.println("SelectDB Exception :" + e.toString());
+			}finally {
+				close();
+			}
+			return position;
+		}
+		
 		public String[] getRangeID(double lat , double lng ,int userID) {
 			
 			String Qresult = "";
