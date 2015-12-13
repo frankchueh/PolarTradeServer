@@ -538,21 +538,25 @@ public class SocketServer {
 								conn.getOutputStream());
 						for(int i = 0; i < pid_set.length; i++) {
 							productID = Integer.parseInt(pid_set[i]);
-							pinfo = DBproduct.getProductInfo(productID).split(",");
-							
-							FileManager info = new FileManager("/product/"+ productID +"/" + "info.txt");
-							temp_info = info.readAllLine();
-							pt = buildStr(temp_info);
-						    File f = new File(pinfo[3]);   // get product photo
-							if (f.exists()) {
-								photo = getFile(f);
-							    if(photo != null)
-							    {
-							    	System.out.println("get photo success");
-							    }
-								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),
-										pt.getBytes(Charset.forName("UTF-8")),photo, Integer.parseInt(pinfo[5]));
-								product_set.add(temp_product);
+							String temp;
+							//有些商品可能以被刪除
+							if((temp = DBproduct.getProductInfo(productID)) != null)
+							{	
+								pinfo = temp.split(",");
+								FileManager info = new FileManager("/product/"+ productID +"/" + "info.txt");
+								temp_info = info.readAllLine();
+								pt = buildStr(temp_info);
+							    File f = new File(pinfo[3]);   // get product photo
+								if (f.exists()) {
+									photo = getFile(f);
+								    if(photo != null)
+								    {
+								    	System.out.println("get photo success");
+								    }
+									temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),
+											pt.getBytes(Charset.forName("UTF-8")),photo, Integer.parseInt(pinfo[5]));
+									product_set.add(temp_product);
+								}
 							}
 						}
 						byte[] send_P = SerializationUtils.serialize(product_set);
