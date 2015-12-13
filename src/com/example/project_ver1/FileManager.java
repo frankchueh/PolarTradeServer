@@ -93,11 +93,12 @@ public class FileManager {
 		}
 	}
 	
-	public void writeObjec(byte[] buffer) throws IOException
+	public void writeObject(byte[] buffer) throws IOException
 	{
 		try {
 			fos = new FileOutputStream(savePath);
 			fos.write(buffer);
+			fos.close();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

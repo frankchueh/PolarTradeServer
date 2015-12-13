@@ -194,7 +194,7 @@ public class SocketServer {
 						{
 							FileManager photo = new FileManager(
 									"/UserPhoto/" + account + ".jpg");
-							photo.writeObjec(buffer);
+							photo.writeObject(buffer);
 							DBuser.setPhoto(account, photo.savePath); // 變更使用者照片
 							pw.println("success");
 						}
@@ -220,7 +220,7 @@ public class SocketServer {
 						if((buffer=(byte[])ois.readObject())!=null)	//判斷是否有 product photo 傳來
 						{
 							FileManager photo = new FileManager("/product/"+ productID + "/" + "photo.jpg");
-							photo.writeObjec(buffer);  // 將照片存到指定路徑
+							photo.writeObject(buffer);  // 將照片存到指定路徑
 							
 							pw.println("msg2 success");
 						}
