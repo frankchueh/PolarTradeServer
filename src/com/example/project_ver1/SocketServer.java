@@ -577,15 +577,15 @@ public class SocketServer {
 					Product temp_product = null;
 					byte [] photo = null;
 					String pt = "";
+					String p_result = "";
 					ArrayList <Product> product_set = new ArrayList <Product>();
 					int productID = -1;
 					
 					int userID = DBuser.getUserID(br.readLine());  // 取得 userID
-					pid_set = DBproduct.getUserProduct(userID).split(",");  // 取得 user 下的所有商品 ID
+					p_result = DBproduct.getUserProduct(userID);
 					
-					if(pid_set != null) {
-						
-						if(pid_set[0] != ""){
+					if(p_result != null) {
+							pid_set = p_result.split(",");
 							System.out.println("product exist");
 							pw.println("success");
 							ObjectOutputStream oos = new ObjectOutputStream(
@@ -613,13 +613,8 @@ public class SocketServer {
 							byte[] send_P = SerializationUtils.serialize(product_set);
 							oos.writeObject(send_P);
 							oos.flush();
-						} else {
-							System.out.println("no product exist");
-							pw.println("no products");
-						}
-					}
-					else {
-						pw.print("fail");
+					} else {
+							pw.print("fail");
 					}
 					
 				}
@@ -629,7 +624,6 @@ public class SocketServer {
 					String productInfo = "";
 					String [] s_productInfo = null;
 					FileManager info = null;
-					FileWriter writer = null;
 					FileOutputStream photoAinfo = null;
 					pw.println("msg1 success");
 					

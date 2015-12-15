@@ -46,7 +46,7 @@ public class productDB {
 	
 	public String getUserProduct(int userID) {
 		
-	    Qresult = "";
+	    Qresult = null;
 	    String query = "SELECT productID FROM productdb WHERE userid = ? AND state != \"deleted\";";
 	    
 	    try {
