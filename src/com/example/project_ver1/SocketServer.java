@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -26,13 +27,13 @@ import java.util.*;
 
 public class SocketServer {
 
-//	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
-//				,SQLId = "user"
-//				,SQLPW = "12345678";
+	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
+				,SQLId = "user"
+				,SQLPW = "12345678";
 	
-	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
-	,SQLId = "root"
-	,SQLPW = "steveandfrank";
+//	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
+//	,SQLId = "root"
+//	,SQLPW = "steveandfrank";
 	
 	userdb DBuser = new userdb();
     locationDB DBmap = new locationDB();
@@ -172,19 +173,10 @@ public class SocketServer {
 					if (f.exists()) {
 						pw.println("success");
 						System.out.println("檔案存在");
-
-						FileInputStream fis = new FileInputStream(f);
+						byte[] photo = getFile(f);
 						ObjectOutputStream oos = new ObjectOutputStream(
 								conn.getOutputStream());
-						byte[] buffer = new byte[1024];
-						int len = -1;
-						ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-						while ((len = fis.read(buffer)) != -1) {
-							outStream.write(buffer, 0, len);
-						}
-						byte[] photo = outStream.toByteArray();
 						oos.writeObject(photo);
-						fis.close();
 
 					} else {
 						pw.println("fail");
@@ -202,7 +194,7 @@ public class SocketServer {
 						{
 							FileManager photo = new FileManager(
 									"/UserPhoto/" + account + ".jpg");
-							photo.writeObjec(buffer);
+							photo.writeObject(buffer);
 							DBuser.setPhoto(account, photo.savePath); // 變更使用者照片
 							pw.println("success");
 						}
@@ -228,7 +220,7 @@ public class SocketServer {
 						if((buffer=(byte[])ois.readObject())!=null)	//判斷是否有 product photo 傳來
 						{
 							FileManager photo = new FileManager("/product/"+ productID + "/" + "photo.jpg");
-							photo.writeObjec(buffer);  // 將照片存到指定路徑
+							photo.writeObject(buffer);  // 將照片存到指定路徑
 							
 							pw.println("msg2 success");
 						}
@@ -276,7 +268,9 @@ public class SocketServer {
 				
 				String command;
 				command = br.readLine(); // 第一行為指令
-
+				
+				System.out.println("NO."+ threadNo + " : " +command);
+				
 				PrintWriter pw = new PrintWriter(new OutputStreamWriter(
 						conn.getOutputStream(), "utf-8"), true);
 				
@@ -361,7 +355,8 @@ public class SocketServer {
 				{
 					int PID = Integer.parseInt(br.readLine());
 					int SID = Integer.parseInt(br.readLine());
-					int BID = Integer.parseInt(br.readLine());
+					String Account = br.readLine();
+					int BID = DBuser.getUserID(Account);
 					int chatID = DBchat.getChatroom(PID, SID, BID);
 					if(chatID!=-1)
 					{
@@ -420,12 +415,15 @@ public class SocketServer {
 					int userID = DBuser.getUserID(account);
 					int[] chatID = DBchat.getChatID(userID);
 					String new_message = "";
-					for(int ID:chatID)
-					{
-						if(DBchat.checkNotification(ID, userID))
-						{	
-							DBchat.cancelNotificatiom(ID, userID);
-							new_message += ID + ",";
+					if(chatID!=null)
+					{	
+						for(int ID:chatID)
+						{
+							if(DBchat.checkNotification(ID, userID))
+							{	
+								DBchat.cancelNotificatiom(ID, userID);
+								new_message += ID + ",";
+							}
 						}
 					}
 					if(!new_message.equals(""))
@@ -438,7 +436,23 @@ public class SocketServer {
 						pw.println("no message");
 					}
 				}
-				
+				else if(command.equals("getLocate"))
+				{
+					int userID = DBuser.getUserID(br.readLine());
+					double[] position = DBmap.getUserLocate(userID);
+					if(position != null)
+					{
+						pw.println("success");
+						pw.println(position[0]);
+						pw.println(position[1]);
+						System.out.println("get location: "+position[0]+", "+position[1]);
+					}
+					else
+					{	
+						pw.println("fail");
+						System.out.println("get location failed");
+					}
+				}
 				else if(command.equals("updateLocate")) {
 					
 					int userID = DBuser.getUserID(br.readLine());
@@ -503,6 +517,58 @@ public class SocketServer {
 					}
 					
 				}
+				
+				else if(command.equals("getProduct")) {    // 取得傳入商品ID的資料
+					
+					String [] pid_set = null;
+					String [] pinfo = null;
+					String [] temp_info = null;
+					Product temp_product = null;
+					byte [] photo = null;
+					String pt = "";
+					ArrayList <Product> product_set = new ArrayList <Product>();
+					int productID = -1;
+					
+					//接收pid,pid,pid....
+					pid_set = br.readLine().split(",");
+							
+					if(pid_set != null) {
+						pw.println("success");
+						ObjectOutputStream oos = new ObjectOutputStream(
+								conn.getOutputStream());
+						for(int i = 0; i < pid_set.length; i++) {
+							productID = Integer.parseInt(pid_set[i]);
+							String temp;
+							//有些商品可能以被刪除
+							if((temp = DBproduct.getProductInfo(productID)) != null)
+							{	
+								pinfo = temp.split(",");
+								FileManager info = new FileManager("/product/"+ productID +"/" + "info.txt");
+								temp_info = info.readAllLine();
+								pt = buildStr(temp_info);
+							    File f = new File(pinfo[3]);   // get product photo
+								if (f.exists()) {
+									photo = getFile(f);
+								    if(photo != null)
+								    {
+								    	System.out.println("get photo success");
+								    }
+									temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),
+										pt.getBytes(Charset.forName("UTF-8")),photo, Integer.parseInt(pinfo[5]));
+									product_set.add(temp_product);
+								}
+							}
+						}
+						byte[] send_P = SerializationUtils.serialize(product_set);
+						oos.writeObject(send_P);
+						oos.flush();
+					}
+					else {
+						pw.print("fail");
+					}
+					
+				}
+				
 				else if(command.equals("getUserProduct")) {    // 取得使用者的所有商品ID
 					
 					String [] pid_set = null;
@@ -533,28 +599,21 @@ public class SocketServer {
 								pt = buildStr(temp_info);
 								File f = new File(pinfo[3]);   // get product photo
 								if (f.exists()) {
-									FileInputStream fis = new FileInputStream(f);
-									byte[] buffer = new byte[1024];
-									int len = -1;
-									ByteArrayOutputStream outStream = new ByteArrayOutputStream();  // 將照片讀進來
-									while ((len = fis.read(buffer)) != -1) {
-										outStream.write(buffer, 0, len);
-									}
-									photo = outStream.toByteArray();  // 將 outStream 讀到的資料轉成 photo
+									photo = getFile(f);
 									if(photo != null)
 									{
 										System.out.println("get photo success");
 									}
-									temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),pt.getBytes(Charset.forName("UTF-8")),photo);
+									temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),
+									pt.getBytes(Charset.forName("UTF-8")),photo, Integer.parseInt(pinfo[5]));
 									product_set.add(temp_product);
-									fis.close();
 								}
 							}
+								
 							byte[] send_P = SerializationUtils.serialize(product_set);
 							oos.writeObject(send_P);
 							oos.flush();
-						}
-						else {
+						} else {
 							System.out.println("no product exist");
 							pw.println("no products");
 						}
@@ -612,6 +671,46 @@ public class SocketServer {
 						pw.println("fail");
 					}
 				}
+				
+				else if(command.equals("searchProduct"))
+				{
+					//接收參數
+					double lat = Double.parseDouble(br.readLine());
+					double lng = Double.parseDouble(br.readLine());
+					String account = br.readLine();
+					//使用account取得userID
+					int userID = DBuser.getUserID(account);
+					//回傳userID,lat,lng的字串陣列
+					String[] around_users = DBmap.getRangeID(lat, lng, userID);
+					if(around_users==null)
+					{
+						pw.println("no result");
+					}
+					else
+					{	
+						String result = "";
+						for(String user:around_users)
+						{	
+							//如果result不是第一行就加\n
+							if(!result.equals(""))
+								result += "\n";
+							
+							int around_userID = Integer.parseInt(user.split(",")[0]);
+							String user_product = DBproduct.getUserProduct(around_userID);
+							//有product才加入result
+							if(!user_product.equals(""))
+							{
+								result += user + ":" + user_product;
+							}
+						}
+						pw.println("success");
+						
+						ObjectOutputStream oos = new ObjectOutputStream(
+								conn.getOutputStream());
+						oos.writeObject(result);
+						oos.flush();
+					}
+				}
 					
 				pw.close();
 //				try {
@@ -628,6 +727,29 @@ public class SocketServer {
 			}
 
 		}
+	}
+	private byte[] getFile(File file)
+	{		byte[] photo = null;
+			FileInputStream fis;
+			try {
+				fis = new FileInputStream(file);
+				byte[] buffer = new byte[1024];
+				int len = -1;
+				ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+				while ((len = fis.read(buffer)) != -1) {
+					outStream.write(buffer, 0, len);
+				}
+				photo = outStream.toByteArray();
+				fis.close();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return photo;
+			
 	}
 	
 	protected String buildStr (String[] str_array) {

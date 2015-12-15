@@ -72,8 +72,7 @@ public class productDB {
 	public String getProductInfo(int productID) {
 		
 		Qresult = "";
-		String query = "SELECT * FROM productdb WHERE productID = ?;";
-		
+		String query = "SELECT * FROM productdb WHERE productID = ? and state = \"new\";";
 		try {
 	    	prepare_input_stat = dbConnect.prepareStatement(query);
 			prepare_input_stat.setInt(1, productID);
@@ -84,7 +83,8 @@ public class productDB {
 						   result.getString("Pname") + "," +
 						   result.getInt("price") + "," +
 						   result.getString("Pphoto") + "," +
-						   result.getString("Pinfo");
+						   result.getString("Pinfo") + "," +
+						   result.getInt("userID");
 			}
 	    			   
 	    }catch(SQLException e) {
@@ -93,6 +93,8 @@ public class productDB {
 			close();
 		}
 		
+		if(Qresult.equals(""))
+			return null;
 		return Qresult;
 
 	}
