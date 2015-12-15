@@ -177,20 +177,23 @@ public class productDB {
 	
 	// 根據 productID 去刪除商品
 	
-	public void deletProduct(int productID) {
+	public int deletProduct(int productID) {
 		
+		int f = 0;
 		String query = "UPDATE productdb SET state = \"deleted\" WHERE productID = ?;";
 		
 		try{
 			prepare_input_stat = dbConnect.prepareStatement(query);
 			prepare_input_stat.setInt(1, productID);
 			prepare_input_stat.executeUpdate();
-			
+			f = 1;
 		}catch(SQLException e) {
 			System.out.println("UpdateDB Exception :" + e.toString());
 		}finally {
 			close();
 		}
+		
+		return f;
 	}
 	
 	// 新增商品圖片時，根據 userID 去取得其最新 (max)的 productID

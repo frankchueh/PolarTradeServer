@@ -518,38 +518,46 @@ public class SocketServer {
 					pid_set = DBproduct.getUserProduct(userID).split(",");  // 取得 user 下的所有商品 ID
 					
 					if(pid_set != null) {
-						pw.println("success");
-						ObjectOutputStream oos = new ObjectOutputStream(
+						
+						if(pid_set[0] != ""){
+							System.out.println("product exist");
+							pw.println("success");
+							ObjectOutputStream oos = new ObjectOutputStream(
 								conn.getOutputStream());
-						for(int i = 0; i < pid_set.length; i++) {
-							productID = Integer.parseInt(pid_set[i]);
-							pinfo = DBproduct.getProductInfo(productID).split(",");
+							for(int i = 0; i < pid_set.length; i++) {
+								productID = Integer.parseInt(pid_set[i]);
+								pinfo = DBproduct.getProductInfo(productID).split(",");
 							
-							FileManager info = new FileManager("/product/"+ productID +"/" + "info.txt");
-							temp_info = info.readAllLine();
-							pt = buildStr(temp_info);
-						    File f = new File(pinfo[3]);   // get product photo
-							if (f.exists()) {
-								FileInputStream fis = new FileInputStream(f);
-								byte[] buffer = new byte[1024];
-								int len = -1;
-								ByteArrayOutputStream outStream = new ByteArrayOutputStream();  // 將照片讀進來
-								while ((len = fis.read(buffer)) != -1) {
-									outStream.write(buffer, 0, len);
+								FileManager info = new FileManager("/product/"+ productID +"/" + "info.txt");
+								temp_info = info.readAllLine();
+								pt = buildStr(temp_info);
+								File f = new File(pinfo[3]);   // get product photo
+								if (f.exists()) {
+									FileInputStream fis = new FileInputStream(f);
+									byte[] buffer = new byte[1024];
+									int len = -1;
+									ByteArrayOutputStream outStream = new ByteArrayOutputStream();  // 將照片讀進來
+									while ((len = fis.read(buffer)) != -1) {
+										outStream.write(buffer, 0, len);
+									}
+									photo = outStream.toByteArray();  // 將 outStream 讀到的資料轉成 photo
+									if(photo != null)
+									{
+										System.out.println("get photo success");
+									}
+									temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),pt.getBytes(Charset.forName("UTF-8")),photo);
+									product_set.add(temp_product);
+									fis.close();
 								}
-							    photo = outStream.toByteArray();  // 將 outStream 讀到的資料轉成 photo
-							    if(photo != null)
-							    {
-							    	System.out.println("get photo success");
-							    }
-								temp_product = new Product(Integer.parseInt(pinfo[0]),pinfo[1],Integer.parseInt(pinfo[2]),pt.getBytes(Charset.forName("UTF-8")),photo);
-								product_set.add(temp_product);
-								fis.close();
 							}
+							byte[] send_P = SerializationUtils.serialize(product_set);
+							oos.writeObject(send_P);
+							oos.flush();
 						}
-						byte[] send_P = SerializationUtils.serialize(product_set);
-						oos.writeObject(send_P);
-						oos.flush();
+						else {
+							System.out.println("no product exist");
+							pw.println("no products");
+						}
 					}
 					else {
 						pw.print("fail");
@@ -593,10 +601,16 @@ public class SocketServer {
 				}
 				else if(command.equals("deleteProduct")) {
 					
+					int pos = Integer.parseInt(br.readLine());
 					int pid = Integer.parseInt(br.readLine());
-					DBproduct.deletProduct(pid);
-					System.out.println("Success delete product" + String.valueOf(pid));
-					pw.println("success");
+					
+					if(DBproduct.deletProduct(pid) == 1) {
+						System.out.println("Success delete product" + String.valueOf(pid));
+						
+						pw.println("success" + String.valueOf(pos));
+					} else {
+						pw.println("fail");
+					}
 				}
 					
 				pw.close();
