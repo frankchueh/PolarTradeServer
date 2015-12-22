@@ -27,13 +27,13 @@ import java.util.*;
 
 public class SocketServer {
 
-	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
-				,SQLId = "user"
-				,SQLPW = "12345678";
+//	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
+//				,SQLId = "user"
+//				,SQLPW = "12345678";
 	
-//	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
-//	,SQLId = "root"
-//	,SQLPW = "steveandfrank";
+	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
+	,SQLId = "root"
+	,SQLPW = "steveandfrank";
 	
 	userdb DBuser = new userdb();
     locationDB DBmap = new locationDB();
@@ -584,7 +584,7 @@ public class SocketServer {
 					int userID = DBuser.getUserID(br.readLine());  // ¨ú±o userID
 					p_result = DBproduct.getUserProduct(userID);
 					
-					if(p_result != null) {
+					if(p_result != "") {
 							pid_set = p_result.split(",");
 							System.out.println("product exist");
 							pw.println("success");
@@ -660,7 +660,8 @@ public class SocketServer {
 					if(DBproduct.deletProduct(pid) == 1) {
 						System.out.println("Success delete product" + String.valueOf(pid));
 						
-						pw.println("success" + String.valueOf(pos));
+						pw.println("success");
+						pw.println(String.valueOf(pos));
 					} else {
 						pw.println("fail");
 					}
