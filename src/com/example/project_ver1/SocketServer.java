@@ -27,13 +27,13 @@ import java.util.*;
 
 public class SocketServer {
 
-	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
-				,SQLId = "user"
-				,SQLPW = "12345678";
+//	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
+//				,SQLId = "user"
+//				,SQLPW = "12345678";
 	
-//	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
-//	,SQLId = "root"
-//	,SQLPW = "steveandfrank";
+	 static String SQLaddress = "jdbc:mysql://localhost:8038/schoolproject?useUnicode=true&characterEncoding=Big5"
+	,SQLId = "root"
+	,SQLPW = "steveandfrank";
 	
 	userdb DBuser = new userdb();
     locationDB DBmap = new locationDB();
@@ -358,7 +358,7 @@ public class SocketServer {
 					String Account = br.readLine();
 					int BID = DBuser.getUserID(Account);
 					int chatID = DBchat.getChatroom(PID, SID, BID);
-					if(chatID!=-1)
+					if(chatID != -1)
 					{
 						pw.println("success");
 						pw.println(chatID);
