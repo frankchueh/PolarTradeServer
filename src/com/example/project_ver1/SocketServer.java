@@ -1,6 +1,13 @@
 package com.example.project_ver1;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriter;
+import javax.imageio.ImageWriteParam;
+
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
@@ -21,10 +29,9 @@ import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.lang.SerializationUtils;
-
 import java.util.*;
 
-
+@SuppressWarnings("restriction")
 public class SocketServer {
 
 //	static String SQLaddress = "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=Big5"
@@ -549,6 +556,7 @@ public class SocketServer {
 							    File f = new File(pinfo[3]);   // get product photo
 								if (f.exists()) {
 									photo = getFile(f);
+									photo = ImageCompress(photo, 0.2f);
 								    if(photo != null)
 								    {
 								    	System.out.println("get photo success");
@@ -745,6 +753,34 @@ public class SocketServer {
 			}
 			return photo;
 			
+	}
+	
+	public byte[] ImageCompress(byte[] photo,float CompressRate)
+	{
+		
+		if(CompressRate > 1.0f)
+			CompressRate = 1.0f;
+		else if (CompressRate < 0.0f)
+			CompressRate = 0.0f;
+		
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		ImageWriter writer = (ImageWriter) ImageIO.getImageWritersByFormatName("jpeg").next();
+
+		ImageWriteParam param = writer.getDefaultWriteParam();
+		param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+		param.setCompressionQuality(CompressRate); // Change this, float between 0.0 and 1.0
+
+		try {
+			InputStream in = new ByteArrayInputStream(photo);
+			BufferedImage image = ImageIO.read(in);
+			writer.setOutput(ImageIO.createImageOutputStream(os));
+			writer.write(null, new IIOImage(image, null, null), param);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		writer.dispose();
+		return os.toByteArray();
 	}
 	
 	protected String buildStr (String[] str_array) {
