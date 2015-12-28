@@ -271,7 +271,7 @@ public class SocketServer {
 			try {
 
 				BufferedReader br = new BufferedReader(new InputStreamReader(
-						conn.getInputStream()));
+						conn.getInputStream(), "UTF-8"));
 				
 				String command;
 				command = br.readLine(); // 第一行為指令
