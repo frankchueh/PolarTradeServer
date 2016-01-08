@@ -1,6 +1,12 @@
 package com.example.project_ver1;
 
+import java.awt.image.BufferedImage;
 import java.io.*;
+
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
 
 
 public class FileManager {
@@ -103,6 +109,19 @@ public class FileManager {
 		}
 	}
 	
+	public void writePhoto(byte[] buffer, float compress_rate) throws IOException
+	{
+		try {
+			fos = new FileOutputStream(savePath);
+			buffer = ImageCompress(buffer, compress_rate);
+			fos.write(buffer);
+			fos.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	public void Clear()
 	{
 		try {
@@ -115,6 +134,37 @@ public class FileManager {
 		}
 		
 	}
+	
+	@SuppressWarnings("restriction")
+	public byte[] ImageCompress(byte[] photo,float CompressRate)
+	{
+		
+		if(CompressRate > 1.0f)
+			CompressRate = 1.0f;
+		else if (CompressRate < 0.0f)
+			CompressRate = 0.0f;
+		
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		ImageWriter writer = (ImageWriter) ImageIO.getImageWritersByFormatName("jpeg").next();
+
+		ImageWriteParam param = writer.getDefaultWriteParam();
+		param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+		param.setCompressionQuality(CompressRate); // Change this, float between 0.0 and 1.0
+
+		try {
+			InputStream in = new ByteArrayInputStream(photo);
+			BufferedImage image = ImageIO.read(in);
+			writer.setOutput(ImageIO.createImageOutputStream(os));
+			writer.write(null, new IIOImage(image, null, null), param);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		writer.dispose();
+		return os.toByteArray();
+	}
+	
+	
 //	public static void main(String[] args) {
 //			FileManager f = new FileManager();
 //			String[] s = f.readAllLine();
