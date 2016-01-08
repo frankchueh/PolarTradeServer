@@ -706,6 +706,47 @@ public class SocketServer {
 						oos.flush();
 					}
 				}
+				
+				else if(command.equals("getNearUser")) {    // 取得使用者的所有商品ID
+					
+					//接收參數
+					String account = br.readLine();
+					double lat = Double.parseDouble(br.readLine());
+					double lng = Double.parseDouble(br.readLine());
+					double[] usr_position = new double[2];
+					//使用account取得userID
+					int userID = DBuser.getUserID(account);
+					//回傳userID,lat,lng的字串陣列
+					String[] around_users = DBmap.getRangeID(lat, lng, userID);
+					if(around_users==null)
+					{
+						pw.println("no result");
+					}
+					else
+					{	
+						String result = "";
+						for(String user:around_users)
+						{	
+							//如果result不是第一行就加\n
+							if(!result.equals(""))
+								result += "\n";
+							
+							int around_userID = Integer.parseInt(user.split(",")[0]);
+							usr_position = DBmap.getUserLocate(around_userID);
+							//有product才加入result
+							if(usr_position != null)
+							{
+								result += user + ":" + Double.toString(usr_position[0]) + ":" + Double.toString(usr_position[1]);
+							}
+						}
+						pw.println("success");
+						
+						ObjectOutputStream oos = new ObjectOutputStream(
+								conn.getOutputStream());
+						oos.writeObject(result);
+						oos.flush();
+					}
+				}
 					
 				pw.close();
 //				try {
