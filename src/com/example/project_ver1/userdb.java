@@ -211,6 +211,25 @@ public class userdb {
 			Close();
 		}
 	}
+	
+	public String getUserNameByID(int userID) {
+		String query = "SELECT Username FROM userdb where userID= ? ;";
+
+		try {
+			pst = dbConnect.prepareStatement(query);
+			pst.setInt(1, userID);
+			rs = pst.executeQuery();
+			if (rs.next())
+				return rs.getString("Username");
+			else
+				return null;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			Close();
+		}
+	}
 
 	public boolean updateUserDetail(int userID, int Age, String Bdate,
 		String sex, String cellphone, String email) {
