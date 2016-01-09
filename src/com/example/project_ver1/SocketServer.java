@@ -704,7 +704,7 @@ public class SocketServer {
 							//有product才加入result
 							if(usr_position != null)
 							{
-								result += user + ":" + Double.toString(usr_position[0]) + ":" + Double.toString(usr_position[1]);
+								result += DBuser.getUserNameByID(around_userID) + ":" + user.split(",")[1] + ":" + user.split(",")[2];
 							}
 						}
 						pw.println("success");
