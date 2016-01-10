@@ -491,9 +491,68 @@ public class SocketServer {
 						pw.println("upload failed");
 					}
 
-				}
+				} else if (command.equals("getCompressProduct")) { // 取得傳入商品ID的資料
 
-				else if (command.equals("getProduct")) { // 取得傳入商品ID的資料
+					String[] pid_set = null;
+					String[] pinfo = null;
+					String[] temp_info = null;
+					Product temp_product = null;
+					byte[] photo = null;
+					String pt = "";
+					ArrayList<Product> product_set = new ArrayList<Product>();
+					int productID = -1;
+
+					// 接收pid,pid,pid....
+					pid_set = br.readLine().split(",");
+
+					if (pid_set != null) {
+						pw.println("success");
+						ObjectOutputStream oos = new ObjectOutputStream(conn.getOutputStream());
+						for (int i = 0; i < pid_set.length; i++) {
+							productID = Integer.parseInt(pid_set[i]);
+							String temp;
+							// 有些商品可能以被刪除
+							if ((temp = DBproduct.getProductInfo(productID)) != null) {
+								pinfo = temp.split(",");
+								FileManager info = new FileManager("/product/" + productID + "/" + "info.txt");
+								temp_info = info.readAllLine();
+								pt = buildStr(temp_info);
+								String compress_photo_path = pinfo[3].replace(".jpg", "_compress.jpg");
+								File f = new File(compress_photo_path); // get
+																		// product
+								// photo
+								if (!f.exists()) { // 如果壓縮相片不存在, 使用原圖再壓一次
+									f = new File(pinfo[3]);
+									if (f.exists()) {
+										photo = getFile(f);
+										FileManager photo_mgr = new FileManager(
+												"/product/" + productID + "/" + "photo_compress.jpg");
+										photo_mgr.writePhoto(photo, 0.2f);
+										photo = getFile(new File(compress_photo_path));
+										System.out.println("Compress Photo success");
+									}
+								} else {
+									photo = getFile(f);
+								}
+
+								if (photo != null) {
+									System.out.println("get photo success");
+								}
+								temp_product = new Product(Integer.parseInt(pinfo[0]), pinfo[1],
+										Integer.parseInt(pinfo[2]), pt.getBytes(Charset.forName("UTF-8")), photo,
+										Integer.parseInt(pinfo[5]));
+								product_set.add(temp_product);
+
+							}
+						}
+						byte[] send_P = SerializationUtils.serialize(product_set);
+						oos.writeObject(send_P);
+						oos.flush();
+					} else {
+						pw.print("fail");
+					}
+
+				} else if (command.equals("getProduct")) { // 取得傳入商品ID的資料
 
 					String[] pid_set = null;
 					String[] pinfo = null;
@@ -569,17 +628,31 @@ public class SocketServer {
 							FileManager info = new FileManager("/product/" + productID + "/" + "info.txt");
 							temp_info = info.readAllLine();
 							pt = buildStr(temp_info);
-							File f = new File(pinfo[3]); // get product photo
-							if (f.exists()) {
-								photo = getFile(f);
-								if (photo != null) {
-									System.out.println("get photo success");
+							String compress_photo_path = pinfo[3].replace(".jpg", "_compress.jpg");
+							File f = new File(compress_photo_path); // get
+																	// product
+							// photo
+							if (!f.exists()) { // 如果壓縮相片不存在, 使用原圖再壓一次
+								f = new File(pinfo[3]);
+								if (f.exists()) {
+									photo = getFile(f);
+									FileManager photo_mgr = new FileManager(
+											"/product/" + productID + "/" + "photo_compress.jpg");
+									photo_mgr.writePhoto(photo, 0.2f);
+									photo = getFile(new File(compress_photo_path));
+									System.out.println("Compress Photo success");
 								}
-								temp_product = new Product(Integer.parseInt(pinfo[0]), pinfo[1],
-										Integer.parseInt(pinfo[2]), pt.getBytes(Charset.forName("UTF-8")), photo,
-										Integer.parseInt(pinfo[5]));
-								product_set.add(temp_product);
+							} else {
+								photo = getFile(f);
 							}
+
+							if (photo != null) {
+								System.out.println("get photo success");
+							}
+							temp_product = new Product(Integer.parseInt(pinfo[0]), pinfo[1], Integer.parseInt(pinfo[2]),
+									pt.getBytes(Charset.forName("UTF-8")), photo, Integer.parseInt(pinfo[5]));
+							product_set.add(temp_product);
+
 						}
 
 						byte[] send_P = SerializationUtils.serialize(product_set);
@@ -674,43 +747,39 @@ public class SocketServer {
 						oos.flush();
 					}
 				}
-	
-				else if(command.equals("getNearUser")) {    // 取得使用者的所有商品ID
-					
-					//接收參數
+
+				else if (command.equals("getNearUser")) { // 取得使用者的所有商品ID
+
+					// 接收參數
 					String account = br.readLine();
 					double lat = Double.parseDouble(br.readLine());
 					double lng = Double.parseDouble(br.readLine());
 					double[] usr_position = new double[2];
-					//使用account取得userID
+					// 使用account取得userID
 					int userID = DBuser.getUserID(account);
-					//回傳userID,lat,lng的字串陣列
+					// 回傳userID,lat,lng的字串陣列
 					String[] around_users = DBmap.getRangeID(lat, lng, userID);
-					if(around_users==null)
-					{
+					if (around_users == null) {
 						pw.println("no result");
-					}
-					else
-					{	
+					} else {
 						String result = "";
-						for(String user:around_users)
-						{	
-							//如果result不是第一行就加\n
-							if(!result.equals(""))
+						for (String user : around_users) {
+							// 如果result不是第一行就加\n
+							if (!result.equals(""))
 								result += "\n";
-							
+
 							int around_userID = Integer.parseInt(user.split(",")[0]);
 							usr_position = DBmap.getUserLocate(around_userID);
-							//有product才加入result
-							if(usr_position != null)
-							{
-								result += DBuser.getUserNameByID(around_userID) + ":" + user.split(",")[1] + ":" + user.split(",")[2];
+							// 有product才加入result
+							if (usr_position != null) {
+								result += DBuser.getUserNameByID(around_userID) + ":" + user.split(",")[1] + ":"
+										+ user.split(",")[2];
 							}
 						}
+						System.out.println(result);
 						pw.println("success");
-						
-						ObjectOutputStream oos = new ObjectOutputStream(
-								conn.getOutputStream());
+
+						ObjectOutputStream oos = new ObjectOutputStream(conn.getOutputStream());
 						oos.writeObject(result);
 						oos.flush();
 					}

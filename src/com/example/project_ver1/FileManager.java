@@ -1,5 +1,6 @@
 package com.example.project_ver1;
 
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
 
@@ -136,7 +137,7 @@ public class FileManager {
 	}
 	
 	@SuppressWarnings("restriction")
-	public byte[] ImageCompress(byte[] photo,float CompressRate)
+	public byte[] ImageCompress(byte[] photo, float CompressRate)
 	{
 		
 		if(CompressRate > 1.0f)
@@ -154,6 +155,7 @@ public class FileManager {
 		try {
 			InputStream in = new ByteArrayInputStream(photo);
 			BufferedImage image = ImageIO.read(in);
+			image = resizeImage(image, image.getType(), image.getWidth()/10, image.getHeight()/10);
 			writer.setOutput(ImageIO.createImageOutputStream(os));
 			writer.write(null, new IIOImage(image, null, null), param);
 		} catch (IOException e) {
@@ -163,6 +165,14 @@ public class FileManager {
 		writer.dispose();
 		return os.toByteArray();
 	}
+	
+	private static BufferedImage resizeImage(BufferedImage originalImage, int type, int width, int height){
+		BufferedImage resizedImage = new BufferedImage(width, height, type);
+		Graphics2D g = resizedImage.createGraphics();
+		g.drawImage(originalImage, 0, 0, width, height, null);
+		g.dispose();
+		return resizedImage;
+	    }
 	
 	
 //	public static void main(String[] args) {
