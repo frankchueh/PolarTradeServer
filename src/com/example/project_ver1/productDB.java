@@ -69,10 +69,12 @@ public class productDB {
 	
 	// 根據 productID 取得其所有的相關資訊 ( 名稱 , 價格  , 照片路徑 , 資訊路徑 )
 	
-	public String getProductInfo(int productID) {
+	public String getProductInfo(int productID, boolean showDelete) {
 		
 		Qresult = "";
 		String query = "SELECT * FROM productdb WHERE productID = ? and state = \"new\";";
+		if (showDelete)
+			query = "SELECT * FROM productdb WHERE productID = ? ";
 		try {
 	    	prepare_input_stat = dbConnect.prepareStatement(query);
 			prepare_input_stat.setInt(1, productID);
