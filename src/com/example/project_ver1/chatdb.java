@@ -90,6 +90,40 @@ public class chatdb {
 
 	}
 
+	public boolean checkNewMessage(int chatID, int userID) {
+
+		int BID, SID, newB, newS;
+		String query = "select * from chatroomdb where chatID=?";
+		try {
+			pst = dbConnect.prepareStatement(query);
+			pst.setInt(1, chatID);
+			rs = pst.executeQuery();
+
+			if (rs.next()) {
+				BID = rs.getInt("buyerID");
+				SID = rs.getInt("sellerID");
+				newB = rs.getInt("newForBuyer");
+				newS = rs.getInt("newForSeller");
+
+				if (userID == BID && newB == 1) // 要通知Buyer
+				{
+					return true;
+				} else if (userID == SID && newS == 1) // 要通知Seller
+				{
+					return true;
+				} else {
+					return false;
+				}
+			} else
+				return false;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		} finally {
+			Close();
+		}
+	}
+
 	public boolean checkNotification(int chatID, int userID) {
 
 		int BID, SID, notiB, notiS;
@@ -171,6 +205,85 @@ public class chatdb {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return -1; // 錯誤
+		} finally {
+			Close();
+		}
+	}
+
+	public int getChatRoomProductID(int chatID) {
+		String query = "select productID from chatroomdb where chatID=?"; // 抓取chatroom資料
+		try {
+			pst = dbConnect.prepareStatement(query);
+			pst.setInt(1, chatID);
+			rs = pst.executeQuery();
+			if (rs.next())
+				return rs.getInt("productID");
+			else
+				return -1;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return -1;
+		} finally {
+			Close();
+		}
+	}
+
+	public void setNewMessage(int chatID, int userID) {
+
+		String query = "select * from chatroomdb where chatID=?"; // 抓取chatroom資料
+		try {
+
+			pst = dbConnect.prepareStatement(query);
+			pst.setInt(1, chatID);
+			rs = pst.executeQuery();
+			if (rs.next())
+				if (userID == rs.getInt("buyerID")) // 如果是買方,通知賣方
+				{
+					query = "update chatroomdb set newForSeller=1 where chatID=?";
+					pst = dbConnect.prepareStatement(query);
+					pst.setInt(1, chatID);
+					pst.execute();
+				} else if (userID == rs.getInt("sellerID"))// 如果是賣方,通知買方
+				{
+					query = "update chatroomdb set newForBuyer=1 where chatID=?";
+					pst = dbConnect.prepareStatement(query);
+					pst.setInt(1, chatID);
+					pst.execute();
+				}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			Close();
+		}
+	}
+
+	public void cancelNewMessage(int chatID, int userID) {
+
+		String query = "select * from chatroomdb where chatID=?"; // 抓取聊天室資料
+		try {
+
+			pst = dbConnect.prepareStatement(query);
+			pst.setInt(1, chatID);
+			rs = pst.executeQuery();
+
+			if (rs.next())
+				if (userID == rs.getInt("buyerID")) // 如果是買方,關掉買方的通知
+				{
+					query = "update chatroomdb set newForBuyer=0 where chatID=?";
+					pst = dbConnect.prepareStatement(query);
+					pst.setInt(1, chatID);
+					pst.execute();
+				} else if (userID == rs.getInt("sellerID")) // 如果是賣方,關掉賣方的通知
+				{
+					query = "update chatroomdb set newForSeller=0 where chatID=?";
+					pst = dbConnect.prepareStatement(query);
+					pst.setInt(1, chatID);
+					pst.execute();
+				}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
 		} finally {
 			Close();
 		}
@@ -299,32 +412,15 @@ public class chatdb {
 		}
 	}
 
-	// public static void main(String[] arg)
-	// {
-	// chatdb DB = new chatdb();
-	//
-	// int[] chatID = DB.checkMessage(1);
-	//
-	//
-	//
-	// for(int i=0;i<chatID.length;i++)
-	// {
-	// if(DB.checkNotification(chatID[i],1))
-	// System.out.println("Noti:"+chatID[i]);
-	//
-	// }
-	// System.out.print(DB.getChatroomForSeller(1));
-	// System.out.print(DB.getChatroomForBuyer(1));
-	//
-	// DB.sendNotification(DB.getChatroom(1,1,2), 1);
-	// DB.sendNotification(DB.getChatroom(1,1,2), 2);
-	// DB.sendNotification(DB.getChatroom(3,2,1), 2);
-	// DB.sendNotification(DB.getChatroom(3,2,1), 1);
-	// DB.sendNotification(DB.getChatroom(4,2,2), 1);
-	// DB.sendNotification(DB.getChatroom(5,3,1), 1);
-	// DB.sendNotification(DB.getChatroom(5,3,2), 1);
-	// DB.sendNotification(DB.getChatroom(2,1,3), 1);
-	//
-	// }
+//	 public static void main(String[] arg)
+//	 {
+//	 chatdb DB = new chatdb();
+//	 DB.cancelNewMessage(4, 2);
+//	 DB.cancelNewMessage(4, 4);
+//	 if(DB.checkNewMessage(4, 2))
+//		 System.out.println("new Message");;
+//		 if(DB.checkNewMessage(4, 4))
+//			 System.out.println("new Message");;
+//	 }
 
 }
