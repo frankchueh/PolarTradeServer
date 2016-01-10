@@ -1,4 +1,5 @@
 package com.example.project_ver1;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -328,7 +329,6 @@ public class SocketServer {
 					}
 					pw.println("success");
 					pw.println(data);
-
 				}
 
 				else if (command.equals("GetChatRoom")) {
@@ -342,10 +342,75 @@ public class SocketServer {
 						pw.println(chatID);
 					} else
 						pw.println("fail");
-
 				}
 
-				else if (command.equals("UpdateMessage")) {
+				else if (command.equals("GetChatRoomProduct")) {
+					String[] cid_set = null;
+					String[] pid_set = null;
+					String[] pinfo = null;
+					String[] temp_info = null;
+					Product temp_product = null;
+					byte[] photo = null;
+					String pt = "";
+					ArrayList<Product> product_set = new ArrayList<Product>();
+					int productID = -1;
+
+					// 接收cid,cid,cid....
+					cid_set = br.readLine().split(",");
+					String pid_temp = "";
+					for (String cid: cid_set)
+					{
+						int chatID = Integer.parseInt(cid);
+						pid_temp +=  "" + DBchat.getChatRoomProductID(chatID) + ",";
+					}
+					pid_set = pid_temp.split(",");
+					if (pid_set != null) {
+						pw.println("success");
+						ObjectOutputStream oos = new ObjectOutputStream(conn.getOutputStream());
+						for (int i = 0; i < pid_set.length; i++) {
+							productID = Integer.parseInt(pid_set[i]);
+							String temp;
+							// 聊天室需要顯示已被刪除的商品
+							if ((temp = DBproduct.getProductInfo(productID, true)) != null) {
+								pinfo = temp.split(",");
+								FileManager info = new FileManager("/product/" + productID + "/" + "info.txt");
+								temp_info = info.readAllLine();
+								pt = buildStr(temp_info);
+								String compress_photo_path = pinfo[3].replace(".jpg", "_compress.jpg");
+								File f = new File(compress_photo_path); // get
+																		// product
+								// photo
+								if (!f.exists()) { // 如果壓縮相片不存在, 使用原圖再壓一次
+									f = new File(pinfo[3]);
+									if (f.exists()) {
+										photo = getFile(f);
+										FileManager photo_mgr = new FileManager(
+												"/product/" + productID + "/" + "photo_compress.jpg");
+										photo_mgr.writePhoto(photo, 0.2f);
+										photo = getFile(new File(compress_photo_path));
+										System.out.println("Compress Photo success");
+									}
+								} else {
+									photo = getFile(f);
+								}
+
+								if (photo != null) {
+									System.out.println("get photo success");
+								}
+								temp_product = new Product(Integer.parseInt(pinfo[0]), pinfo[1],
+										Integer.parseInt(pinfo[2]), pt.getBytes(Charset.forName("UTF-8")), photo,
+										Integer.parseInt(pinfo[5]));
+								product_set.add(temp_product);
+
+							}
+						}
+						byte[] send_P = SerializationUtils.serialize(product_set);
+						oos.writeObject(send_P);
+						oos.flush();
+					} else {
+						pw.print("fail");
+					}
+				} else if (command.equals("UpdateMessage")) {
 					try {
 						ObjectInputStream ois = new ObjectInputStream(conn.getInputStream());
 						String msg;
@@ -499,7 +564,7 @@ public class SocketServer {
 							productID = Integer.parseInt(pid_set[i]);
 							String temp;
 							// 有些商品可能以被刪除
-							if ((temp = DBproduct.getProductInfo(productID)) != null) {
+							if ((temp = DBproduct.getProductInfo(productID, false)) != null) {
 								pinfo = temp.split(",");
 								FileManager info = new FileManager("/product/" + productID + "/" + "info.txt");
 								temp_info = info.readAllLine();
@@ -560,7 +625,7 @@ public class SocketServer {
 							productID = Integer.parseInt(pid_set[i]);
 							String temp;
 							// 有些商品可能以被刪除
-							if ((temp = DBproduct.getProductInfo(productID)) != null) {
+							if ((temp = DBproduct.getProductInfo(productID, false)) != null) {
 								pinfo = temp.split(",");
 								FileManager info = new FileManager("/product/" + productID + "/" + "info.txt");
 								temp_info = info.readAllLine();
@@ -610,7 +675,7 @@ public class SocketServer {
 						ObjectOutputStream oos = new ObjectOutputStream(conn.getOutputStream());
 						for (int i = 0; i < pid_set.length; i++) {
 							productID = Integer.parseInt(pid_set[i]);
-							pinfo = DBproduct.getProductInfo(productID).split(",");
+							pinfo = DBproduct.getProductInfo(productID, false).split(",");
 
 							FileManager info = new FileManager("/product/" + productID + "/" + "info.txt");
 							temp_info = info.readAllLine();
