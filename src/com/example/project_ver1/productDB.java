@@ -20,7 +20,7 @@ public class productDB {
 	// 執行後傳入 SQL的預備字串 -> 等待給定數值 -> 用　"?" 做標示
 	private PreparedStatement prepare_input_stat = null;
 	
-	String Qresult;
+	String Qresult = null;
 	
 	
 	// Database 連線
